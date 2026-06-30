@@ -10,11 +10,11 @@ pub struct Initialize<'info> {
         mut,
         address = ADMIN
     )]
-    pub payer: Signer<'info>,
+    pub admin: Signer<'info>,
 
     #[account(
         init,
-        payer = payer,
+        payer = admin,
         space = 8 + FaucetConfig::INIT_SPACE,
         seeds = [FAUCET_SEED.as_bytes(), seed.to_le_bytes().as_ref()],
         bump
@@ -23,7 +23,7 @@ pub struct Initialize<'info> {
 
     #[account(
         init,
-        payer = payer,
+        payer = admin,
         mint::decimals = decimals,
         mint::authority = mint,
         seeds = [MINT_SEED.as_bytes(), seed.to_le_bytes().as_ref()],
@@ -37,12 +37,10 @@ pub struct Initialize<'info> {
 
 pub fn handler(
     ctx: Context<Initialize>,
-    faucet_authority: Pubkey,
     max_supply: u64,
     mint_timeout: i64,
     mint_limit: u64,
 ) -> Result<()> {
-    ctx.accounts.faucet_config.faucet_authority = faucet_authority;
     ctx.accounts.faucet_config.max_supply = max_supply;
     ctx.accounts.faucet_config.mint_timeout = mint_timeout;
     ctx.accounts.faucet_config.mint_limit = mint_limit;

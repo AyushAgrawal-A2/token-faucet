@@ -1,18 +1,18 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token_interface::Mint;
 
-use crate::{error::TokenFaucetError, FaucetConfig, FAUCET_SEED, MINT_SEED};
+use crate::{error::TokenFaucetError, FaucetConfig, ADMIN, FAUCET_SEED, MINT_SEED};
 
 #[derive(Accounts)]
 #[instruction(seed: u64)]
 pub struct UpdateConfig<'info> {
-    pub faucet_authority: Signer<'info>,
+    #[account(address = ADMIN)]
+    pub admin: Signer<'info>,
 
     #[account(
         mut,
         seeds = [FAUCET_SEED.as_bytes(), seed.to_le_bytes().as_ref()],
         bump = faucet_config.bump,
-        has_one = faucet_authority
     )]
     pub faucet_config: Account<'info, FaucetConfig>,
 

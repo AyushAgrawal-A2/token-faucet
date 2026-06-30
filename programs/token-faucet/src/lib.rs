@@ -19,12 +19,11 @@ pub mod token_faucet {
         ctx: Context<Initialize>,
         _seed: u64,
         _decimals: u8,
-        faucet_authority: Pubkey,
         max_supply: u64,
         mint_timeout: i64,
         mint_limit: u64,
     ) -> Result<()> {
-        initialize::handler(ctx, faucet_authority, max_supply, mint_timeout, mint_limit)
+        initialize::handler(ctx, max_supply, mint_timeout, mint_limit)
     }
 
     pub fn update_config(
