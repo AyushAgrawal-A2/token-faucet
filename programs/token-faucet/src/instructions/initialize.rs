@@ -1,9 +1,51 @@
 use anchor_lang::prelude::*;
+use anchor_spl::token_interface::{Mint, TokenInterface};
+
+use crate::{FaucetConfig, ADMIN, FAUCET_SEED, MINT_SEED};
 
 #[derive(Accounts)]
-pub struct Initialize {}
+#[instruction(seed: u64, decimals: u8)]
+pub struct Initialize<'info> {
+    #[account(
+        mut,
+        address = ADMIN
+    )]
+    pub payer: Signer<'info>,
 
-pub fn handler(ctx: Context<Initialize>) -> Result<()> {
-    msg!("Greetings from: {:?}", ctx.program_id);
+    #[account(
+        init,
+        payer = payer,
+        space = 8 + FaucetConfig::INIT_SPACE,
+        seeds = [FAUCET_SEED.as_bytes(), seed.to_le_bytes().as_ref()],
+        bump
+    )]
+    pub faucet_config: Account<'info, FaucetConfig>,
+
+    #[account(
+        init,
+        payer = payer,
+        mint::decimals = decimals,
+        mint::authority = mint,
+        seeds = [MINT_SEED.as_bytes(), seed.to_le_bytes().as_ref()],
+        bump
+    )]
+    pub mint: InterfaceAccount<'info, Mint>,
+
+    pub system_program: Program<'info, System>,
+    pub token_program: Interface<'info, TokenInterface>,
+}
+
+pub fn handler(
+    ctx: Context<Initialize>,
+    faucet_authority: Pubkey,
+    max_supply: u64,
+    mint_timeout: i64,
+    mint_limit: u64,
+) -> Result<()> {
+    ctx.accounts.faucet_config.faucet_authority = faucet_authority;
+    ctx.accounts.faucet_config.max_supply = max_supply;
+    ctx.accounts.faucet_config.mint_timeout = mint_timeout;
+    ctx.accounts.faucet_config.mint_limit = mint_limit;
+    ctx.accounts.faucet_config.bump = ctx.bumps.faucet_config;
     Ok(())
 }
