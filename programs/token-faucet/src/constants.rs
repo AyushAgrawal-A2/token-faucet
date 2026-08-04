@@ -1,9 +1,6 @@
 use anchor_lang::prelude::*;
 
 #[constant]
-pub const ADMIN: Pubkey = Pubkey::from_str_const("FCC44mavoXedAweJ9pZKQSW2yqsKoKcDfGRvWAA4uMgv");
-
-#[constant]
 pub const FAUCET_SEED: &str = "token-faucet";
 
 #[constant]

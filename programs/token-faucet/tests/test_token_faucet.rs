@@ -15,15 +15,10 @@ use {
     token_faucet::{FaucetConfig, MintTimeout, FAUCET_SEED, MINT_SEED, MINT_TIMEOUT_SEED},
 };
 
-const ADMIN_BYTES: [u8; 32] = [
-    141, 230, 113, 141, 215, 26, 159, 237, 198, 141, 191, 180, 113, 69, 172, 108, 74, 130, 74, 247,
-    242, 0, 79, 139, 170, 129, 229, 67, 68, 124, 32, 30,
-];
-
 #[test]
 fn test_token_faucet() {
     let program_id = token_faucet::id();
-    let admin = Keypair::new_from_array(ADMIN_BYTES);
+    let admin = Keypair::new();
     let payer = Keypair::new();
     let payer_address = payer.pubkey();
     let mut svm = LiteSVM::new();
@@ -87,6 +82,7 @@ fn test_token_faucet() {
     let faucet_config_account = svm.get_account(&faucet_config_pda).unwrap();
     let faucet_config =
         FaucetConfig::try_deserialize(&mut faucet_config_account.data.as_slice()).unwrap();
+    assert_eq!(faucet_config.admin, admin.pubkey());
     assert_eq!(faucet_config.max_supply, 0);
     assert_eq!(faucet_config.mint_timeout, 0);
     assert_eq!(faucet_config.mint_limit, 0);
@@ -121,6 +117,30 @@ fn test_token_faucet() {
             .unwrap();
     let res = svm.send_transaction(tx);
     assert!(res.is_err());
+
+    // a non-admin cannot update the faucet config
+    let instruction = Instruction::new_with_bytes(
+        program_id,
+        &token_faucet::instruction::UpdateConfig {
+            _seed: seed,
+            max_supply,
+            mint_timeout,
+            mint_limit,
+        }
+        .data(),
+        token_faucet::accounts::UpdateConfig {
+            admin: payer_address,
+            faucet_config: faucet_config_pda,
+            mint: mint_pda,
+        }
+        .to_account_metas(None),
+    );
+    let blockhash = svm.latest_blockhash();
+    let msg = Message::new_with_blockhash(&[instruction], Some(&payer_address), &blockhash);
+    let tx =
+        VersionedTransaction::try_new(VersionedMessage::Legacy(msg), &[payer.insecure_clone()])
+            .unwrap();
+    assert!(svm.send_transaction(tx).is_err());
 
     let instruction = Instruction::new_with_bytes(
         program_id,

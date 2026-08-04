@@ -10,4 +10,8 @@ pub enum TokenFaucetError {
     InvalidMaxSupply,
     #[msg("Exceeded mint limit, wait for timeout")]
     MintTimeoutExceeded,
+    #[msg("Mint timeout must be non-negative")]
+    InvalidMintTimeout,
+    #[msg("Signer is not the faucet admin")]
+    Unauthorized,
 }

@@ -1,15 +1,12 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token_interface::{Mint, TokenInterface};
 
-use crate::{FaucetConfig, ADMIN, FAUCET_SEED, MINT_SEED};
+use crate::{error::TokenFaucetError, FaucetConfig, FAUCET_SEED, MINT_SEED};
 
 #[derive(Accounts)]
 #[instruction(seed: u64, decimals: u8)]
 pub struct Initialize<'info> {
-    #[account(
-        mut,
-        address = ADMIN
-    )]
+    #[account(mut)]
     pub admin: Signer<'info>,
 
     #[account(
@@ -41,6 +38,8 @@ pub fn handler(
     mint_timeout: i64,
     mint_limit: u64,
 ) -> Result<()> {
+    require!(mint_timeout >= 0, TokenFaucetError::InvalidMintTimeout);
+    ctx.accounts.faucet_config.admin = ctx.accounts.admin.key();
     ctx.accounts.faucet_config.max_supply = max_supply;
     ctx.accounts.faucet_config.mint_timeout = mint_timeout;
     ctx.accounts.faucet_config.mint_limit = mint_limit;
